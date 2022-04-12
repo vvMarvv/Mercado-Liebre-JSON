@@ -19,11 +19,12 @@ const controller = {
 
 	// Detail - Detail from one product
 	detail: (req, res) => {
-		let productId = +req.params.id
-		let productToEdit = products.find(product=>product.id === productId)
+		let productId = +req.params.id     // id parametro
+		let product = products.find(product => product.id === productId)
 		
-		res.render('product-edit-form', {
-			product: productToEdit
+		res.render('detail',{
+			product,
+			toThousand
 		})
 	},
 
@@ -42,26 +43,19 @@ const controller = {
 				lastId = product.id
 			}
 		})
-		/* let newProduct = {
+		
+		let newProduct = {
 			id: lastId + 1,
 			name,
 			price,
 			discount,
 			category,
 			description,
-			image: "default-img-png"
+			image:  req.file ? req.file.filename : "default-image.png"
 		}
 
-		*/
-		let newProduct = {
-			...req.body,
-			id: lastId + 1,
-			image: "default-image.png"
-		}
-
-		products.push(newProduct)
-
-		writeJson(products)
+		products.push(newProduct);
+		writeJson(products);
 
 		res.redirect('/products')
 
@@ -86,7 +80,7 @@ const controller = {
 			if(product.id === productId) {
 				product.id = product.id
 				product.name = name,
-				product.price = price,
+				product.price = +price,
 				product.discount = discount,
 				product.description = description
 				if(req.file){
@@ -112,18 +106,26 @@ const controller = {
 
 	// Delete - Delete one product from DB
 	destroy : (req, res) => {
-		let productId = +req.params.id
+		let productId = +req.params.id //lo pongo en number
 
 		products.forEach(product => {
-			if(product.id === productId) {
+			if (product.id === productId) {
+				if(fs.existsSync('../public/images/products/', product.image)) {
+					fs.unlinkSync(`../public/images/products/${product.image}`)
+				} else {
+					console.log('No encontre el archivo')
+				}
+
 				let productToDestroyIndex = products.indexOf(product)
-				productToDestroyIndex !== -1 ?
-				products.splice(productToDestroyIndex, 1) :
-				console.log('No encontré el producto')
+				if (productToDestroyIndex !== -1) {
+					products.splice(productToDestroyIndex, 1);
+				} else {
+					console.log('No encontre el producto')
+				}
 			}
 		})
+		writeJson(products);
 
-		writeJson(products)
 		res.redirect('/products')
 	}
 };
